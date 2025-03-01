@@ -54,7 +54,7 @@ export const MobileMenu = ({menuOpen, setMenuOpen}) => {
                             {" "}
                             Sign In{" "} 
                         </a>
-                    </div>
+                </div>
         </div>
     );
 }   

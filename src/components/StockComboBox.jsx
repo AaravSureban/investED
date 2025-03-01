@@ -4,26 +4,27 @@ import { auth, db } from "../firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
-export const StockComboBox = ({ stocks, onSelect }) => {
+export const StockComboBox = ({ onSelect }) => {
   const [search, setSearch] = useState("");
-  const [filteredStocks, setFilteredStocks] = useState(stocks);
+  const [filteredStocks, setFilteredStocks] = useState([]);
   const [selectedStock, setSelectedStock] = useState("");
   const [selectedStocks, setSelectedStocks] = useState([]);
+  const [stockPrice, setStockPrice] = useState("");
+  const [purchaseDate, setPurchaseDate] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [showPurchaseForm, setShowPurchaseForm] = useState(false);
   const [user, setUser] = useState(null);
   const dropdownRef = useRef(null);
+  const API_KEY = "cv1kgupr01qngf097ikgcv1kgupr01qngf097il0"; // Replace with your API key
+  const debounceTimeout = useRef(null);
 
-  // Handle authentication
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      }
+      if (currentUser) setUser(currentUser);
     });
     return () => unsubscribe();
   }, []);
 
-  // Fetch stocks from Firestore
   useEffect(() => {
     if (user) {
       const fetchStocks = async () => {
@@ -41,73 +42,135 @@ export const StockComboBox = ({ stocks, onSelect }) => {
     }
   }, [user]);
 
-  // Handle search input change
+  const fetchStocksFromAPI = async (query) => {
+    if (!query) {
+      setFilteredStocks([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(`https://finnhub.io/api/v1/stock/symbol?exchange=US&token=${API_KEY}`);
+      const data = await response.json();
+      const queryLower = query.toLowerCase();
+
+      let filtered = data
+        .filter(
+          (stock) =>
+            stock.symbol.toLowerCase().includes(queryLower) ||
+            stock.description.toLowerCase().includes(queryLower)
+        )
+        .slice(0, 10);
+
+      setFilteredStocks(
+        filtered.map((stock) => ({
+          ticker: stock.symbol,
+          fullName: stock.description
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching stock data:", error);
+    }
+  };
+
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearch(query);
 
-    const filtered = stocks.filter((stock) =>
-      stock.toLowerCase().includes(query.toLowerCase())
-    );
-    setFilteredStocks(filtered);
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+
+    debounceTimeout.current = setTimeout(() => {
+      fetchStocksFromAPI(query);
+    }, 300);
   };
 
-  // Handle stock selection and save to Firestore
-  const handleSelectStock = async (stock) => {
-    if (user && !selectedStocks.includes(stock)) {
-      const updatedStocks = [...selectedStocks, stock];
+  const handleSelectStock = (stock) => {
+    setSelectedStock(stock.ticker);
+    setStockPrice("");
+    setPurchaseDate("");
+    setIsOpen(false);
+    setSearch("");
+    setShowPurchaseForm(true); // Show the purchase form when a stock is selected
+  };
+
+  const handleSaveStock = async () => {
+    if (!selectedStock || !stockPrice || !purchaseDate) {
+      alert("Please select a stock and enter both a price and a date.");
+      return;
+    }
+
+    const newStock = {
+      ticker: selectedStock,
+      price: stockPrice,
+      date: purchaseDate,
+      isActive: true, 
+    };
+
+    if (selectedStocks.some((s) => s.ticker === newStock.ticker)) {
+      alert(`${newStock.ticker} is already in your portfolio`);
+      return;
+    }
+
+    if (user) {
+      const updatedStocks = [...selectedStocks, newStock];
       setSelectedStocks(updatedStocks);
-      setSelectedStock(stock);
-      onSelect(stock);
 
       try {
         const userDocRef = doc(db, "users", user.uid);
         await setDoc(userDocRef, { stocks: updatedStocks }, { merge: true });
+
+        if (onSelect) onSelect(newStock.ticker);
+
+        alert(`${newStock.ticker} added to your portfolio`);
       } catch (error) {
         console.error("Error saving stocks:", error);
+        alert("Error saving stock. Please try again.");
       }
     }
 
-    setIsOpen(false);
+    // Reset fields after adding
+    setSelectedStock("");
+    setStockPrice("");
+    setPurchaseDate("");
     setSearch("");
+    setShowPurchaseForm(false);
   };
 
-  // Handle stock removal
-  const handleRemoveStock = async (stock) => {
-    const updatedStocks = selectedStocks.filter((s) => s !== stock);
-    setSelectedStocks(updatedStocks); // Update UI immediately
+  const handleCancelPurchase = () => {
+    setSelectedStock("");
+    setStockPrice("");
+    setPurchaseDate("");
+    setShowPurchaseForm(false);
+  };
 
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, { stocks: updatedStocks }, { merge: true });
-    } catch (error) {
-      console.error("Error removing stock:", error);
+  const handleToggleStock = (ticker) => {
+    const updatedStocks = selectedStocks.map((stock) =>
+      stock.ticker === ticker ? { ...stock, isActive: !stock.isActive } : stock
+    );
+    setSelectedStocks(updatedStocks);
+  };
+
+  const handleDeleteStock = async (ticker) => {
+    const updatedStocks = selectedStocks.filter((stock) => stock.ticker !== ticker);
+    setSelectedStocks(updatedStocks);
+
+    if (user) {
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        await setDoc(userDocRef, { stocks: updatedStocks }, { merge: true });
+      } catch (error) {
+        console.error("Error deleting stock:", error);
+      }
     }
   };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   return (
-    <div className="relative w-64" ref={dropdownRef}>
-      {/* ComboBox Button */}
+    <div className="relative w-full max-w-md" ref={dropdownRef}>
       <button
         className="w-full px-4 py-2 bg-gray-800 text-white rounded-md text-left relative"
         onClick={() => {
-            setIsOpen(!isOpen)
-            setSearch("");
-            setFilteredStocks(stocks);
+          setIsOpen(!isOpen);
+          setSearch("");
+          setFilteredStocks([]);
         }}
       >
         {selectedStock || "Select Stock"}
@@ -121,15 +184,8 @@ export const StockComboBox = ({ stocks, onSelect }) => {
         </span>
       </button>
 
-      {/* Dropdown with Fade-in Animation */}
       {isOpen && (
-        <div
-          className={`absolute w-full mt-2 bg-gray-700 text-white rounded-md shadow-lg z-50 
-          transition-all duration-300 origin-top transform ${
-            isOpen ? "opacity-100 scale-y-100" : "opacity-0 scale-y-0"
-          }`}
-        >
-          {/* Search Bar */}
+        <div className="absolute w-full mt-2 bg-gray-700 text-white rounded-md shadow-lg z-50">
           <div className="relative">
             <input
               type="text"
@@ -137,20 +193,23 @@ export const StockComboBox = ({ stocks, onSelect }) => {
               placeholder="Search stocks..."
               value={search}
               onChange={handleSearchChange}
+              autoFocus
             />
             <FaSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           </div>
 
-          {/* Stock List */}
-          <ul className="max-h-40 overflow-y-auto">
+          <ul className="max-h-60 overflow-y-auto">
             {filteredStocks.length > 0 ? (
               filteredStocks.map((stock, index) => (
                 <li
                   key={index}
-                  className="px-4 py-2 hover:bg-gray-500 cursor-pointer"
+                  className="px-4 py-2 cursor-pointer hover:bg-gray-500"
                   onClick={() => handleSelectStock(stock)}
                 >
-                  {stock}
+                  <div className="flex flex-col">
+                    <span className="font-bold">{stock.ticker}</span>
+                    <span className="text-sm text-gray-300">{stock.fullName}</span>
+                  </div>
                 </li>
               ))
             ) : (
@@ -160,21 +219,71 @@ export const StockComboBox = ({ stocks, onSelect }) => {
         </div>
       )}
 
-      {/* Display Selected Stocks Below */}
+      {/* Purchase Form */}
+      {showPurchaseForm && selectedStock && (
+        <div className="mt-4 p-4 bg-gray-700 rounded-md">
+          <h3 className="text-lg font-medium text-white mb-2">Add {selectedStock} to Portfolio</h3>
+          
+          <div className="mb-3">
+            <label className="block text-sm text-gray-300 mb-1">Purchase Price ($)</label>
+            <input
+              type="number"
+              value={stockPrice}
+              onChange={(e) => setStockPrice(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-600 text-white rounded-md"
+              placeholder="0.00"
+              step="0.01"
+              min="0"
+            />
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-sm text-gray-300 mb-1">Purchase Date</label>
+            <input
+              type="date"
+              value={purchaseDate}
+              onChange={(e) => setPurchaseDate(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-600 text-white rounded-md"
+            />
+          </div>
+          
+          <div className="flex justify-end space-x-2">
+            <button 
+              onClick={handleCancelPurchase}
+              className="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleSaveStock}
+              className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Add to Portfolio
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="mt-4">
-        <h3 className="text-md font-semibold text-white">Your Selected Stocks:</h3>
+        <h3 className="text-lg font-medium text-white">Your Portfolio</h3>
         <ul className="mt-2">
           {selectedStocks.map((stock, index) => (
-            <li key={index} className="bg-gray-700 p-2 mt-1 rounded text-white flex justify-between items-center">
-              {stock}
-              <button
-                onClick={() => handleRemoveStock(stock)}
-                className="ml-3 text-[#F93943] hover:text-red-700 font-bold text-lg"
-              >
-                ×
-              </button>
+            <li key={index} className="px-4 py-2 flex justify-between items-center bg-gray-700 rounded-md mb-2">
+              <span className="font-medium">{stock.ticker}</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-right">${stock.price}</span>
+                <button 
+                  onClick={() => handleDeleteStock(stock.ticker)} 
+                  className="ml-3 text-red-400 hover:text-red-300"
+                >
+                  ✖
+                </button>
+              </div>
             </li>
           ))}
+          {selectedStocks.length === 0 && (
+            <li className="px-4 py-2 text-gray-400">No stocks in portfolio</li>
+          )}
         </ul>
       </div>
     </div>

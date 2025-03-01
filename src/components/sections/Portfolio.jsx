@@ -1,6 +1,7 @@
 import React from 'react';
 import StockComboBox from '../StockView';
 import GraphComponent from '../GraphPage';
+import PerplexityChat from "../PerplexityChat";
 
 export const Portfolio = () => {
     return (
@@ -8,6 +9,7 @@ export const Portfolio = () => {
             {/* Left Side: Stock List (Doesn't push the graph down) */}
             <div className="w-1/4 flex flex-col space-y-4">
                 <StockComboBox />
+                <PerplexityChat />
             </div>
 
             {/* Right Side: Graph (Fixed Position) */}

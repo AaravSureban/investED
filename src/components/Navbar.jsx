@@ -24,21 +24,21 @@ export const Navbar = ({menuOpen, setMenuOpen}) => {
                     <div className="hidden md:flex items-center space-x-8">
                         <a 
                             href="#home" 
-                            className="tex-gray-300 hove:text-white transition-colors"
+                            className="text-gray-300 hove:text-white transition-colors"
                         > 
                             {" "}
                             Home{" "} 
                         </a>
                         <a 
                             href="#portfolio" 
-                            className="tex-gray-300 hove:text-white transition-colors"
+                            className="text-gray-300 hove:text-white transition-colors"
                         > 
                             {" "}
                             Portfolio{" "} 
                         </a>
                         <a 
                             href="#signin" 
-                            className="tex-gray-300 hove:text-white transition-colors"
+                            className="text-gray-300 hove:text-white transition-colors"
                         > 
                             {" "}
                             Sign In{" "} 

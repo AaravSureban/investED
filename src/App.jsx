@@ -11,7 +11,7 @@ import Quiz from "./components/Quiz";
 
 import { Home } from './components/sections/Home';
 import { Portfolio } from './components/sections/Portfolio';
-import  AuthRoute  from '../components/Authroute';
+import  AuthRoute  from './components/Authroute';
 import "./index.css";
 
 function App() {

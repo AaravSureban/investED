@@ -1,0 +1,19 @@
+.zoomable-text {
+    transition: transform 0.3s ease;
+    transform-origin: center;
+    /* Keep the zooming centered */
+}
+
+.slider-container {
+    display: flex;
+    overflow: hidden;
+    width: 100%;
+    /* Adjust based on how wide you want your view to be */
+}
+
+.slide {
+    min-width: 100%;
+    /* Each slide takes up the full width of the container */
+    transition: transform 0.5s ease-in-out;
+    /* Smooth transition */
+}

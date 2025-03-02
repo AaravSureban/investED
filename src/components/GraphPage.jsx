@@ -36,7 +36,8 @@ const colorPalette = [
     "rgb(231, 233, 237)"   // Gray
 ];
 
-export const ChartComponent = () => {
+// Accept a new prop "purchasedStock" that should have a symbol and a purchaseDate.
+export const ChartComponent = ({ purchasedStock }) => {
     const [selectedStocks, setSelectedStocks] = useState([{ symbol: "AAPL", active: true }]);
     const [newStockSymbol, setNewStockSymbol] = useState("");
     const [timeRange, setTimeRange] = useState("6mo");
@@ -86,7 +87,7 @@ export const ChartComponent = () => {
             return;
         }
 
-        // Find the common date range or use the first stock's dates
+        // Use the first active stock's labels as the common x-axis labels.
         let commonLabels = [];
         if (activeStocks.length > 0 && stocksData[activeStocks[0].symbol]) {
             const firstStockSymbol = activeStocks[0].symbol;
@@ -108,17 +109,35 @@ export const ChartComponent = () => {
                 const startIndex = Math.max(0, endIndex - pointsToShow);
                 
                 const selectedPrices = allPrices.slice(startIndex, endIndex);
-                const colorIndex = index % colorPalette.length;
+                const originalColor = colorPalette[index % colorPalette.length];
                 
-                return {
+                // Build the dataset normally...
+                let dataset = {
                     label: `${symbol}`,
                     data: selectedPrices,
-                    borderColor: colorPalette[colorIndex],
-                    backgroundColor: colorPalette[colorIndex],
+                    borderColor: originalColor,
+                    backgroundColor: originalColor,
                     tension: 0,
                     borderWidth: 2,
                     pointRadius: 0.5,
                 };
+
+                // If this stock was purchased and a purchase date is provided, highlight its post-purchase data.
+                if (purchasedStock && purchasedStock.symbol === symbol && purchasedStock.purchaseDate) {
+                    // Find the index in commonLabels that corresponds to the purchase date.
+                    const purchaseIndex = commonLabels.findIndex(label => new Date(label) >= new Date(purchasedStock.purchaseDate));
+                    // Add a segment callback that changes the border color for points after the purchase date.
+                    dataset.segment = {
+                        borderColor: ctx => {
+                            if (purchaseIndex !== -1 && ctx.p0DataIndex >= purchaseIndex) {
+                                return "red"; // highlight color for post-purchase data
+                            }
+                            return originalColor;
+                        }
+                    };
+                }
+
+                return dataset;
             });
 
         setDisplayedChartData({
@@ -143,7 +162,7 @@ export const ChartComponent = () => {
         if (Object.keys(stocksData).length > 0) {
             updateDisplayedData();
         }
-    }, [timeRange, stocksData, selectedStocks]);
+    }, [timeRange, stocksData, selectedStocks, purchasedStock]);
 
     const handleAddStock = (e) => {
         e.preventDefault();

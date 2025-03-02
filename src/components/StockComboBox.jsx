@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"; 
+import { useState, useRef, useEffect } from "react";
 import { FaSearch } from "react-icons/fa";
 import { auth, db } from "../firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -11,8 +11,10 @@ export const StockComboBox = ({ onSelect }) => {
   const [selectedStocks, setSelectedStocks] = useState([]);
   const [stockPrice, setStockPrice] = useState("");
   const [purchaseDate, setPurchaseDate] = useState("");
+  const [quantity, setQuantity] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState(null);
   const dropdownRef = useRef(null);
   const API_KEY = "cv1kgupr01qngf097ikgcv1kgupr01qngf097il0"; // Replace with your API key
@@ -57,18 +59,64 @@ export const StockComboBox = ({ onSelect }) => {
         .filter(
           (stock) =>
             stock.symbol.toLowerCase().includes(queryLower) ||
-            stock.description.toLowerCase().includes(queryLower)
-        )
+            stock.description.toLowerCase().includes(queryLower))
         .slice(0, 10);
 
       setFilteredStocks(
         filtered.map((stock) => ({
           ticker: stock.symbol,
-          fullName: stock.description
+          fullName: stock.description,
         }))
       );
     } catch (error) {
       console.error("Error fetching stock data:", error);
+    }
+  };
+
+  const fetchHistoricalPrice = async (ticker, date) => {
+    try {
+      setIsLoading(true);
+
+      // Validate date format (YYYY-MM-DD)
+      if (!date || !date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        console.error("Invalid or missing date:", date);
+        return null;
+      }
+
+      // Build the URL using the provided date
+      const backendUrl = "http://127.0.0.1:5000/stock_data_by_date"; // Adjust if needed
+      const url = `${backendUrl}?stock=${encodeURIComponent(ticker)}&purchaseDate=${date}`;
+
+      console.log("Fetching historical price with URL:", url); // Debug log
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Error response from backend:", text);
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (data.error) {
+        console.error("Backend error:", data.error);
+        return null;
+      }
+
+      // Use the 'price' key if available, otherwise check for an array of prices.
+      if (data.price) {
+        return parseFloat(data.price).toFixed(2);
+      }
+      if (data.prices && data.prices.length > 0) {
+        return parseFloat(data.prices[0]).toFixed(2);
+      }
+      console.error("No price data found in response");
+      return null;
+    } catch (error) {
+      console.error("Error fetching historical price:", error);
+      return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -87,22 +135,52 @@ export const StockComboBox = ({ onSelect }) => {
     setSelectedStock(stock.ticker);
     setStockPrice("");
     setPurchaseDate("");
+    setQuantity("");
     setIsOpen(false);
     setSearch("");
     setShowPurchaseForm(true); // Show the purchase form when a stock is selected
   };
 
   const handleSaveStock = async () => {
-    if (!selectedStock || !stockPrice || !purchaseDate) {
-      alert("Please select a stock and enter both a price and a date.");
+    // Log current input values for debugging
+    console.log("Selected Stock:", selectedStock);
+    console.log("Purchase Date:", purchaseDate);
+    console.log("Stock Price:", stockPrice);
+    console.log("Quantity:", quantity);
+
+    // Require quantity and at least one of price or date
+    if (!selectedStock || !quantity || (!stockPrice && !purchaseDate)) {
+      alert("Please select a stock, enter quantity, and provide either price or purchase date.");
       return;
+    }
+
+    let finalPrice = stockPrice;
+    let finalDate = purchaseDate;
+
+    // If date provided but no price, fetch the historical price from your backend
+    if (purchaseDate && !stockPrice) {
+      finalPrice = await fetchHistoricalPrice(selectedStock, purchaseDate);
+      if (!finalPrice) {
+        alert("Error fetching historical price. Please try again.");
+        return;
+      }
+    }
+
+    // If only price provided but no date, use the current date
+    if (stockPrice && !purchaseDate) {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      finalDate = `${year}-${month}-${day}`;
     }
 
     const newStock = {
       ticker: selectedStock,
-      price: stockPrice,
-      date: purchaseDate,
-      isActive: true, 
+      price: finalPrice,
+      date: finalDate,
+      quantity: quantity,
+      isActive: true,
     };
 
     if (selectedStocks.some((s) => s.ticker === newStock.ticker)) {
@@ -119,8 +197,6 @@ export const StockComboBox = ({ onSelect }) => {
         await setDoc(userDocRef, { stocks: updatedStocks }, { merge: true });
 
         if (onSelect) onSelect(newStock.ticker);
-
-        alert(`${newStock.ticker} added to your portfolio`);
       } catch (error) {
         console.error("Error saving stocks:", error);
         alert("Error saving stock. Please try again.");
@@ -131,6 +207,7 @@ export const StockComboBox = ({ onSelect }) => {
     setSelectedStock("");
     setStockPrice("");
     setPurchaseDate("");
+    setQuantity("");
     setSearch("");
     setShowPurchaseForm(false);
   };
@@ -139,6 +216,7 @@ export const StockComboBox = ({ onSelect }) => {
     setSelectedStock("");
     setStockPrice("");
     setPurchaseDate("");
+    setQuantity("");
     setShowPurchaseForm(false);
   };
 
@@ -225,7 +303,9 @@ export const StockComboBox = ({ onSelect }) => {
           <h3 className="text-lg font-medium text-white mb-2">Add {selectedStock} to Portfolio</h3>
           
           <div className="mb-3">
-            <label className="block text-sm text-gray-300 mb-1">Purchase Price ($)</label>
+            <label className="block text-sm text-gray-300 mb-1">
+              Purchase Price ($) <span className="text-xs text-gray-400">(Optional if date provided)</span>
+            </label>
             <input
               type="number"
               value={stockPrice}
@@ -237,13 +317,40 @@ export const StockComboBox = ({ onSelect }) => {
             />
           </div>
           
-          <div className="mb-4">
-            <label className="block text-sm text-gray-300 mb-1">Purchase Date</label>
+          <div className="mb-3">
+            <label className="block text-sm text-gray-300 mb-1">
+              Purchase Date <span className="text-xs text-gray-400">(Optional if price provided)</span>
+            </label>
             <input
               type="date"
               value={purchaseDate}
-              onChange={(e) => setPurchaseDate(e.target.value)}
+              onChange={(e) => {
+                const newDate = e.target.value;
+                console.log("Date selected:", newDate);
+                setPurchaseDate(newDate);
+              }}
               className="w-full px-3 py-2 bg-gray-600 text-white rounded-md"
+            />
+            {purchaseDate && !stockPrice && (
+              <span className="text-xs text-blue-300 mt-1 block">
+                Historical price will be fetched automatically
+              </span>
+            )}
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-sm text-gray-300 mb-1">
+              Quantity (Shares) <span className="text-xs text-gray-400">(Required)</span>
+            </label>
+            <input
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-600 text-white rounded-md"
+              placeholder="0"
+              step="1"
+              min="1"
+              required
             />
           </div>
           
@@ -256,9 +363,10 @@ export const StockComboBox = ({ onSelect }) => {
             </button>
             <button 
               onClick={handleSaveStock}
-              className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-70"
+              disabled={isLoading}
             >
-              Add to Portfolio
+              {isLoading ? "Fetching Data..." : "Add to Portfolio"}
             </button>
           </div>
         </div>
@@ -269,9 +377,14 @@ export const StockComboBox = ({ onSelect }) => {
         <ul className="mt-2">
           {selectedStocks.map((stock, index) => (
             <li key={index} className="px-4 py-2 flex justify-between items-center bg-gray-700 rounded-md mb-2">
-              <span className="font-medium">{stock.ticker}</span>
-              <div className="flex items-center space-x-2">
-                <span className="text-right">${stock.price}</span>
+              <div>
+                <span className="font-medium">{stock.ticker}</span>
+                {stock.quantity && <span className="ml-2 text-gray-300">({stock.quantity} shares)</span>}
+              </div>
+              <div className="flex items-center">
+                <div className="text-right mr-2">
+                  <div>${stock.price}</div>
+                </div>
                 <button 
                   onClick={() => handleDeleteStock(stock.ticker)} 
                   className="ml-3 text-red-400 hover:text-red-300"

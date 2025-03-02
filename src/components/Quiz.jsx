@@ -1,6 +1,8 @@
+
+
 import React, { useState, useEffect } from "react";
-import { Button } from "/Users/anshugusain/Documents/GitHub/investif.ai/src/components/ui/button.jsx";
-import { Card, CardContent } from "/Users/anshugusain/Documents/GitHub/investif.ai/src/components/ui/card.jsx";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
 
 
 const questions = [
@@ -12,6 +14,12 @@ const questions = [
      "Investing is only for wealthy individuals, while saving is for everyone.",
      "Saving involves setting aside money in a safe place, while investing involves using money to buy assets that may grow in value.",
    ],
+   explanations: [
+     "While both involve putting money aside, saving is risk-free while investing carries potential losses and gains.",
+     "Investing typically has higher potential returns over time compared to savings accounts.",
+     "Anyone can invest, even with small amounts, through diversified options like index funds and ETFs.",
+     "Saving ensures security, while investing carries risk but has the potential for higher returns.",
+   ],
    correct: 3,
  },
  {
@@ -21,6 +29,12 @@ const questions = [
      "As soon as you have an emergency fund and extra money to invest.",
      "Only after retirement.",
      "Only when you get a stock tip from a friend.",
+   ],
+   explanations: [
+     "Investing at all-time highs can be risky, and it’s better to invest consistently over time.",
+     "Having emergency savings ensures you don’t need to sell investments prematurely in case of unexpected expenses.",
+     "Investing early allows you to benefit from compound growth over the long term.",
+     "Relying on tips instead of research can lead to uninformed and risky investment decisions.",
    ],
    correct: 1,
  },
@@ -32,6 +46,12 @@ const questions = [
      "As much as you can afford after covering expenses and building an emergency fund.",
      "You should never invest; it's too risky.",
    ],
+   explanations: [
+     "Investing everything leaves you vulnerable to emergencies and market downturns.",
+     "While any amount is helpful, increasing your investment as your income grows can lead to greater long-term gains.",
+     "Investing should be done with surplus funds after ensuring financial security and covering necessary expenses.",
+     "Although investing carries risk, avoiding it entirely may prevent long-term wealth growth.",
+   ],
    correct: 2,
  },
  {
@@ -41,6 +61,12 @@ const questions = [
      "A share of ownership in a company that represents a claim on its earnings and assets.",
      "A savings account that pays high interest.",
      "A government bond that matures over time.",
+   ],
+   explanations: [
+     "Loans to companies are bonds, not stocks, and offer fixed interest instead of ownership.",
+     "Stocks give investors partial ownership in a company and a potential share of profits.",
+     "Savings accounts are bank deposits that earn low interest, unlike stocks which fluctuate in value.",
+     "Bonds are debt instruments issued by governments or corporations, while stocks represent ownership.",
    ],
    correct: 1,
  },
@@ -52,6 +78,12 @@ const questions = [
      "Yes, just follow social media trends and buy or sell accordingly.",
      "Yes, stocks always go up at the same time every year.",
    ],
+   explanations: [
+     "No one can predict market movements with certainty due to economic and external factors.",
+     "Even experts struggle to time the market, making long-term investing usually more effective.",
+     "Social media trends can be unreliable and may lead to impulsive investment decisions.",
+     "Stock market movements vary based on multiple factors and do not follow a fixed annual pattern.",
+   ],
    correct: 1,
  },
  {
@@ -62,6 +94,12 @@ const questions = [
      "Investing can have costs such as trading fees, fund expenses, and taxes.",
      "You must have at least $50,000 to start investing.",
    ],
+   explanations: [
+     "Many investments incur fees such as transaction costs, fund expense ratios, or advisory fees.",
+     "Even self-directed investing can involve brokerage fees and fund expenses.",
+     "Investments may involve costs such as brokerage fees, fund management fees, and taxes on profits.",
+     "Many platforms allow you to start investing with as little as a few dollars.",
+   ],
    correct: 2,
  },
  {
@@ -71,6 +109,12 @@ const questions = [
      "Spreading investments across different assets to reduce risk.",
      "Putting all your money into one company’s stock to maximize profits.",
      "Avoiding investments altogether to stay safe.",
+   ],
+   explanations: [
+     "Holding only one stock increases risk as your entire portfolio depends on one company’s performance.",
+     "Diversification helps minimize risk by spreading investments across various assets.",
+     "Concentrating all your money in one stock can lead to high risk if that company underperforms.",
+     "Avoiding investments entirely may prevent long-term wealth growth and limit financial opportunities.",
    ],
    correct: 1,
  },
@@ -161,9 +205,14 @@ function Quiz() {
        </Button>
      </div>
      {submitted && (
-       <p className="mt-4 text-xl font-semibold">
-         {isCorrect ? "Correct!" : "Incorrect!"}
-       </p>
+       <div className="mt-4">
+         <p className="text-xl font-semibold">
+           {isCorrect ? "Correct!" : "Incorrect!"}
+         </p>
+         <p className="mt-2 text-lg">
+           {question.explanations[selectedAnswer]}
+         </p>
+       </div>
      )}
    </div>
  );
@@ -172,21 +221,50 @@ function Quiz() {
 
 // Home component with hero, carousel, and the Quiz section remains mostly unchanged.
 export const Home = () => {
+ const slides = [
+   {
+     title: "Portfolio Analysis",
+     description:
+       "Gain insights into your portfolio performance and identify areas for growth.",
+     image: "/portfolio-analysis.jpg",
+   },
+   {
+     title: "Daily Quizzes",
+     description:
+       "Sharpen your financial knowledge with quick quizzes every day.",
+     image: "/daily-quizzes.jpg",
+   },
+   {
+     title: "Investing Concepts",
+     description:
+       "Explore crucial topics and stay ahead in your investment journey.",
+     image: "/investing-concepts.jpg",
+   },
+ ];
 
 
-    <div>
+ const [currentSlide, setCurrentSlide] = useState(0);
+
+
+ // Auto-slide every 7 seconds
+ useEffect(() => {
+   const interval = setInterval(() => {
+     setCurrentSlide((prev) => (prev + 1) % slides.length);
+   }, 7000);
+   return () => clearInterval(interval);
+ }, [slides.length]);
+
+
+ return (
+   <div className="w-full text-white">
      {/* Quiz Section */}
      <section className="py-8">
        <Quiz />
      </section>
    </div>
+ );
 };
 
 
 export default Home;
-
-
-
-
-
 

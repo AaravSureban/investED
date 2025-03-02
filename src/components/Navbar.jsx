@@ -11,7 +11,7 @@ export const Navbar = ({ menuOpen, setMenuOpen }) => {
             <div className="max-w-5xl mx-auto px-4">
                 <div className="flex justify-between items-center h-16">
                     <Link to="/" className="font-mono text-xl font-bold text-[rgb(247, 235, 232)]"> 
-                        investif<span className="text-green-500">.ai</span> 
+                        invest<span className="text-green-500">ED</span> 
                     </Link>
 
                     {/* Mobile Menu Button */}

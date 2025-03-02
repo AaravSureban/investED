@@ -115,6 +115,9 @@ const PerplexityChat = () => {
 
     };
 
+    const cleanResponse = (response) => {
+    return response.replace(/\s*\d+$/, ""); // Removes any numbers at the end of the response
+};
 
     // 2C. Send request to your backend
     const handleGetNews = async (type) => {
@@ -135,7 +138,7 @@ const PerplexityChat = () => {
             if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
 
             const data = await res.json();
-            const result = data.choices?.[0]?.message?.content || "No response received.";
+            const result = cleanResponse(data.choices?.[0]?.message?.content || "No response received.");
 
             if (type === "response") setResponse(result);
             else if (type === "volatility") setVolatility(result);
@@ -176,10 +179,10 @@ const PerplexityChat = () => {
         </p>
 
         <div className="flex justify-between mt-4">
-            <button onClick={goToPreviousSlide} className="bg-blue-500 text-white p-2 rounded">
+            <button onClick={goToPreviousSlide} className="bg-orange-500 text-white p-2 rounded">
                 Previous
             </button>
-            <button onClick={goToNextSlide} className="bg-blue-500 text-white p-2 rounded">
+            <button onClick={goToNextSlide} className="bg-orange-500 text-white p-2 rounded">
                 Next
             </button>
         </div>

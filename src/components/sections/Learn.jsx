@@ -228,7 +228,7 @@ export default function Learn() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="text-2xl font-bold text-center mb-4">Why Investing Matters (vs. Saving)</h2>
+        <h2 className="text-2xl text-[#282828] font-bold text-center mb-4">Why Investing Matters (vs. Saving)</h2>
         <p className="text-gray-600 text-center mb-6">
           Saving is important for short-term security, but investing allows your
           money to grow significantly over time.
@@ -271,7 +271,7 @@ export default function Learn() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="text-2xl font-bold text-center mb-4">
+        <h2 className="text-2xl text-[#282828] font-bold text-center mb-4">
           Know Your Asset Classes
         </h2>
         <p className="text-gray-600 text-center mb-6">
@@ -301,7 +301,7 @@ export default function Learn() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="text-2xl font-bold text-center mb-4">
+        <h2 className="text-2xl text-[#282828] font-bold text-center mb-4">
           Risk &amp; Reward, Diversification, and Time Horizons
         </h2>
         <p className="text-gray-600 text-center mb-6">
@@ -357,7 +357,7 @@ export default function Learn() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="text-2xl font-bold text-center mb-4">
+        <h2 className="text-2xl text-[#282828] font-bold text-center mb-4">
           Explore Investing by Sectors
         </h2>
         <p className="text-gray-600 text-center mb-6">
@@ -385,20 +385,21 @@ export default function Learn() {
     <Background gap={16} color="#93C48B" />
   </ReactFlow>
 
-  <div>
-      <button
-        onClick={() => navigate("/game")}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-300"
-      >
-        Test Your Skills!
-      </button>
-      <button
-        onClick={() => navigate("/quiz")}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-300"
-      >
-        Quiz Yourself!
-      </button>
-    </div>
+  <div className="mt-13 flex flex-row items-center justify-center space-x-4 pb-10">
+  <button
+    onClick={() => navigate("/game")}
+    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-300"
+  >
+    Test Your Skills!
+  </button>
+  <button
+    onClick={() => navigate("/quiz")}
+    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-300"
+  >
+    Quiz Yourself!
+  </button>
+</div>
+
 
 
 </div>

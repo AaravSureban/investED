@@ -237,7 +237,7 @@ const TopMovers = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Left side: List of top movers */}
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-black rounded-lg shadow p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-semibold">Biggest Movers Today</h3>
             {selectedStocks.length > 0 && (
@@ -282,7 +282,7 @@ const TopMovers = () => {
         </div>
 
         {/* Right side: Chart */}
-        <div className="md:col-span-2 bg-white rounded-lg shadow p-4">
+        <div className="md:col-span-2 bg-black rounded-lg shadow p-4">
           {selectedStocks.length > 0 ? (
             <div>
               <div className="mb-4">
@@ -346,7 +346,7 @@ const TopMovers = () => {
                         }
                         contentStyle={{
                           backgroundColor: "#282828",
-                          color: "white",
+                          color: "grey",
                           border: "none",
                         }}
                       />

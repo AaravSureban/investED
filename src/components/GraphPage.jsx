@@ -28,8 +28,6 @@ const timeRangeToDataPoints = {
 
 // Color palette for different stocks
 const colorPalette = [
-    "rgb(147, 196, 139)",  // Green
-    "rgb(255, 99, 132)",   // Red
     "rgb(54, 162, 235)",   // Blue
     "rgb(255, 206, 86)",   // Yellow
     "rgb(153, 102, 255)",  // Purple
@@ -181,7 +179,7 @@ export const ChartComponent = () => {
     };
 
     return (
-        <div style={{ width: "1000px", position: "relative", top: "-100px", margin: "auto", textAlign: "center" }}>
+        <div style={{ width: "1000px", position: "relative", top: "-10px", margin: "auto", textAlign: "center" }}>
             <form onSubmit={handleAddStock} style={{ marginBottom: "20px" }}>
                 <input 
                     type="text" 

@@ -37,6 +37,12 @@ export const Navbar = ({ menuOpen, setMenuOpen }) => {
                             Portfolio
                         </Link>
                         <Link 
+                            to="/learn" 
+                            className="text-gray-300 hover:text-[rgb(247, 235, 232)] transition-colors"
+                        > 
+                            Learn
+                        </Link>
+                        <Link 
                             to="/signin" 
                             className="text-gray-300 hover:text-[rgb(247, 235, 232)] transition-colors"
                         > 

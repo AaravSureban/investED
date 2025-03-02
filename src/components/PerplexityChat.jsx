@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { db } from "../firebase";             // <-- import your db
 import { collection, getDocs } from "firebase/firestore"; // Firestore functions
+import { doc, onSnapshot } from "firebase/firestore"; // Import getDoc for single document
+import { getAuth, onAuthStateChanged } from "firebase/auth"; // Import authentication
 
 const PerplexityChat = () => {
   const [stockSymbols, setStockSymbols] = useState([]);
@@ -10,26 +12,39 @@ const PerplexityChat = () => {
 
   // 2A. Load stock symbols from Firestore:
   useEffect(() => {
-    const fetchSymbols = async () => {
-      try {
-        console.log("Fetching stock symbols from Firestore...");
-        const querySnapshot = await getDocs(collection(db, "stocks"));
-        const symbolsArray = [];
-  
-        querySnapshot.forEach((doc) => {
-          console.log("Found document:", doc.data()); // Debugging
-          symbolsArray.push(doc.data().symbol);
+    const fetchSymbols = () => {
+        const auth = getAuth();
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            const userId = user.uid; // Get logged-in user's UID
+            console.log("Listening for stock updates for user:", userId);
+      
+            // Reference to the user's Firestore document
+            const docRef = doc(db, "users", userId);
+      
+            // Real-time listener
+            onSnapshot(docRef, (docSnap) => {
+              if (docSnap.exists()) {
+                const stockData = docSnap.data().stocks; // Access the stocks array
+                
+                if (Array.isArray(stockData)) {
+                  const symbolsArray = stockData.map((stock) => stock.ticker); // Extract tickers
+                  console.log("Updated stock tickers:", symbolsArray);
+                  setStockSymbols(symbolsArray); // Update state in real-time
+                } else {
+                  console.log("No stock data found.");
+                }
+              } else {
+                console.log("User's portfolio document not found.");
+              }
+            }, (error) => {
+              console.error("Error with real-time listener:", error);
+            });
+          } else {
+            console.log("No user is logged in.");
+          }
         });
-  
-        if (symbolsArray.length === 0) {
-          console.log("No stocks found in Firestore.");
-        }
-  
-        setStockSymbols(symbolsArray);
-      } catch (error) {
-        console.error("Error fetching symbols:", error);
-      }
-    };
+      };
   
     fetchSymbols();
   }, []); // Runs once on mount
@@ -43,7 +58,7 @@ const PerplexityChat = () => {
     return (
       "Please search online for any current news about the following stocks: " +
       stockSymbols.join(", ") +
-      ". Then summarize the latest headlines or information for each ticker symbol."
+      ". Then summarize the latest headlines or information for each ticker symbol. Be concise in your answer. Lmit respnses to 100 words, while providing sentiment analysis on the articles you find to base your opinion."
     );
   };
 
@@ -95,13 +110,13 @@ const PerplexityChat = () => {
   }, [response]);
 
   return (
-    <div className="p-4 border rounded shadow-md w-full">
-      <h2 className="text-lg font-semibold">Analyze Portfolio</h2>
+    <div className="p-4 rounded shadow-md w-full">
+      <h2 className="text-4xl font-semibold">Analyze Portfolio</h2>
 
       <p className="my-2">
         <strong>Tracking Stocks:</strong>{" "}
         {stockSymbols && stockSymbols.length
-          ? stockSymbols.join(", ") : "Loading from DB or none found"}
+          ? stockSymbols.join(", ") : "Loading..."}
       </p>
 
       <button
@@ -113,10 +128,10 @@ const PerplexityChat = () => {
       </button>
 
       <div
-        className="mt-4 p-2 border rounded h-48 overflow-y-auto bg-gray-100"
+        className="mt-4 rounded h-48 overflow-y-auto"
         ref={responseContainerRef}
       >
-        <h3 className="font-semibold">## Response:</h3>
+        <h3 className="font-semibold"> Response:</h3>
         <pre className="whitespace-pre-wrap">{response}</pre>
       </div>
     </div>

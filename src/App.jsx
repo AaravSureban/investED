@@ -5,6 +5,9 @@ import { Navbar } from './components/Navbar';
 import { MobileMenu } from './components/MobileMenu';
 import { Signin } from './components/sections/Signin';
 import { Signup } from './components/sections/Signup';
+import Learn from './components/sections/Learn';
+import Game from "./components/Game"; 
+import Quiz from "./components/Quiz";
 
 import { Home } from './components/sections/Home';
 import { Portfolio } from './components/sections/Portfolio';
@@ -30,6 +33,9 @@ function App() {
           <main className="mt-16">
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/learn" element={<Learn />} />
+              <Route path="/game" element={<Game />} />
+              <Route path="/quiz" element={<Quiz />} />
               <Route path="/portfolio" element={<AuthRoute><Portfolio /></AuthRoute>} />
               <Route path="/signin" element={<Signin />} />
               <Route path="/signup" element={<Signup />} />

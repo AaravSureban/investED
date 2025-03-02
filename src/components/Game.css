@@ -1,0 +1,40 @@
+.game-container {
+    padding: 20px;
+    text-align: center;
+    max-width: 600px;
+    margin: auto;
+    background-color: #f4f4f4;
+    border-radius: 10px;
+    color: black;
+    transition: background-color 0.3s;
+  }
+  
+  .flash-red {
+    background-color: rgba(255, 0, 0, 0.5) !important;
+  }
+  
+  .flash-green {
+    background-color: rgba(0, 255, 0, 0.5) !important;
+  }
+  
+  .shake-screen {
+    animation: shake 0.5s ease-in-out;
+  }
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+  }
+  
+  .decision-btn {
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+  }

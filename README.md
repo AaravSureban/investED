@@ -1,4 +1,4 @@
-# investiED
+# investED
 HackIllinois 2025, Financial Hack
 
 ## Purpose

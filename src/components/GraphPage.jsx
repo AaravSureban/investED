@@ -51,7 +51,7 @@ export const ChartComponent = ({ purchasedStock }) => {
         setLoading(true);
         setError(null);
 
-        fetch(`http://127.0.0.1:5000/stock_data?stock=${symbol}&range=max`)
+        fetch(`https://invested-backend.onrender.com/stock_data?stock=${symbol}&range=max`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Stock not found: ${symbol}`);

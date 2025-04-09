@@ -84,7 +84,7 @@ export const StockComboBox = ({ onSelect }) => {
       }
 
       // Build the URL using the provided date
-      const backendUrl = "http://127.0.0.1:5000/stock_data_by_date"; // Adjust if needed
+      const backendUrl = "https://invested-backend.onrender.com/stock_data_by_date"; // Adjust if needed
       const url = `${backendUrl}?stock=${encodeURIComponent(ticker)}&purchaseDate=${date}`;
 
       console.log("Fetching historical price with URL:", url); // Debug log
